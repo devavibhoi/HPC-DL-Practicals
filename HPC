@@ -1,0 +1,417 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <omp.h>
+
+using namespace std;
+
+class Graph {
+    int V;
+    vector<vector<int>> adj;
+
+public:
+    Graph(int V) {
+        this->V = V;
+        adj.resize(V);
+    }
+
+    void addEdge(int u, int v) {
+        adj[u].push_back(v);
+        adj[v].push_back(u); // undirected graph
+    }
+
+    // 🔵 Parallel BFS
+    void parallelBFS(int start) {
+        vector<bool> visited(V, false);
+        queue<int> q;
+
+        visited[start] = true;
+        q.push(start);
+
+        cout << "\nParallel BFS Traversal: ";
+
+        while (!q.empty()) {
+            int size = q.size();
+
+            #pragma omp parallel for
+            for (int i = 0; i < size; i++) {
+                int node = -1;
+
+                #pragma omp critical
+                {
+                    if (!q.empty()) {
+                        node = q.front();
+                        q.pop();
+                        cout << node << " ";
+                    }
+                }
+
+                if (node != -1) {
+                    for (int neighbor : adj[node]) {
+                        if (!visited[neighbor]) {
+                            #pragma omp critical
+                            {
+                                if (!visited[neighbor]) {
+                                    visited[neighbor] = true;
+                                    q.push(neighbor);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        cout << endl;
+    }
+
+    // 🔴 Parallel DFS Utility
+    void parallelDFSUtil(int node, vector<bool> &visited) {
+        bool alreadyVisited;
+
+        #pragma omp critical
+        {
+            alreadyVisited = visited[node];
+            if (!visited[node]) {
+                visited[node] = true;
+                cout << node << " ";
+            }
+        }
+
+        if (alreadyVisited) return;
+
+        #pragma omp parallel for
+        for (int i = 0; i < adj[node].size(); i++) {
+            int neighbor = adj[node][i];
+
+            if (!visited[neighbor]) {
+                #pragma omp task
+                parallelDFSUtil(neighbor, visited);
+            }
+        }
+    }
+
+    // 🔴 Parallel DFS
+    void parallelDFS(int start) {
+        vector<bool> visited(V, false);
+
+        cout << "\nParallel DFS Traversal: ";
+
+        #pragma omp parallel
+        {
+            #pragma omp single
+            {
+                parallelDFSUtil(start, visited);
+            }
+        }
+
+        cout << endl;
+    }
+};
+
+int main() {
+    int V, E;
+
+    cout << "Enter number of vertices: ";
+    cin >> V;
+
+    Graph g(V);
+
+    cout << "Enter number of edges: ";
+    cin >> E;
+
+    cout << "Enter edges (u v):\n";
+    for (int i = 0; i < E; i++) {
+        int u, v;
+        cin >> u >> v;
+        g.addEdge(u, v);
+    }
+
+    int start;
+    cout << "Enter starting vertex: ";
+    cin >> start;
+
+    g.parallelBFS(start);
+    g.parallelDFS(start);
+
+    return 0;
+}
+
+    //    0
+    //    / \
+    //   1   2
+    //  / \   \
+    // 3   4   5
+
+// Enter number of vertices: 6
+// Enter number of edges: 5
+// Enter edges (u v):
+// 0 1
+// 0 2
+// 1 3
+// 1 4
+// 2 5
+// Enter starting vertex: 0 
+
+
+
+
+Command to execute :
+>> g++ bfs_dfs.cpp -fopenmp -o bfs_dfs.exe
+>> .\bfs_dfs.exe
+Explanation :-
+This program implements a Graph and performs:
+1. Parallel Breadth First Search (BFS) using OpenMP
+2. Parallel Depth First Search (DFS) using OpenMP tasks
+1. Header Files
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <omp.h>
+Purpose
+Header Use
+iostream Input/output (cin, cout)
+vector Dynamic arrays
+queue BFS queue
+omp.h OpenMP parallel programming
+2. Graph Class
+class Graph {
+int V;
+vector<vector<int>> adj;
+Meaning
+• V → number of vertices
+• adj → adjacency list
+Example graph:
+0 → 1,2
+1 → 0,3,4
+2 → 0,5
+Stored as:
+adj[0] = {1,2}
+adj[1] = {0,3,4}
+adj[2] = {0,5}
+3. Constructor
+Graph(int V) {
+this->V = V;
+adj.resize(V);
+}
+What happens
+If V = 6
+adj.resize(6);
+Creates:
+adj[0]
+adj[1]
+adj[2]
+adj[3]
+adj[4]
+adj[5]
+Each stores neighbors of that vertex.
+4. Adding Edges
+void addEdge(int u, int v) {
+adj[u].push_back(v);
+adj[v].push_back(u);
+}
+Because graph is undirected:
+If input:
+0 1
+Then:
+adj[0].push_back(1);
+adj[1].push_back(0);
+Connection works both ways.
+5. Parallel BFS
+BFS Concept
+BFS explores:
+Level by level
+Example:
+0
+/ \
+1 2
+/ \ \
+3 4 5
+Traversal:
+0 → 1 → 2 → 3 → 4 → 5
+6. BFS Function
+void parallelBFS(int start)
+Step 1: Create visited array
+vector<bool> visited(V, false);
+Initially:
+visited = [false,false,false,false,false,false]
+Step 2: Create queue
+queue<int> q;
+Queue stores nodes to process.
+Step 3: Mark start visited
+visited[start] = true;
+q.push(start);
+If start = 0:
+visited = [true,false,false,false,false,false]
+queue = [0]
+7. Main BFS Loop
+while (!q.empty())
+Continue until queue becomes empty.
+8. Current Queue Size
+int size = q.size();
+Suppose:
+queue = [1,2]
+size = 2
+This means current BFS level has 2 nodes.
+9. Parallel Processing
+#pragma omp parallel for
+for (int i = 0; i < size; i++)
+Multiple threads process nodes simultaneously.
+Example:
+Thread Node
+Thread 1 1
+Thread 2 2
+10. Critical Section
+#pragma omp critical
+{
+if (!q.empty()) {
+node = q.front();
+q.pop();
+cout << node << " ";
+}
+}
+Why critical?
+Queue is shared among threads.
+Without protection:
+• two threads may remove same node
+• data corruption may happen
+critical allows only ONE thread at a time.
+11. Visiting Neighbors
+for (int neighbor : adj[node])
+Example:
+adj[1] = {0,3,4}
+Loop checks:
+• 0
+• 3
+• 4
+12. Add Unvisited Nodes
+if (!visited[neighbor])
+If node not visited:
+#pragma omp critical
+{
+if (!visited[neighbor]) {
+visited[neighbor] = true;
+q.push(neighbor);
+}
+}
+Again critical section prevents:
+• duplicate insertion
+• race conditions
+BFS Execution Example
+Initial State
+Queue = [0]
+Visited = [T,F,F,F,F,F]
+Iteration 1
+Process node 0
+Neighbors:
+• 1
+• 2
+Add them.
+Queue = [1,2]
+Visited = [T,T,T,F,F,F]
+Output = 0
+Iteration 2
+Parallel threads process:
+• 1
+• 2
+Neighbors added:
+• 3
+• 4
+• 5
+Queue = [3,4,5]
+Visited = [T,T,T,T,T,T]
+Output = 0 1 2
+Iteration 3
+Process:
+• 3
+• 4
+• 5
+Done.
+Final BFS:
+0 1 2 3 4 5
+13. Parallel DFS
+DFS Concept
+DFS explores deeply before backtracking.
+Traversal may be:
+0 → 1 → 3 → 4 → 2 → 5
+14. DFS Utility Function
+void parallelDFSUtil(int node, vector<bool> &visited)
+Recursive DFS helper.
+15. Check Visited
+#pragma omp critical
+{
+alreadyVisited = visited[node];
+if (!visited[node]) {
+visited[node] = true;
+cout << node << " ";
+}
+}
+Critical avoids multiple threads visiting same node simultaneously.
+16. Return if Already Visited
+if (alreadyVisited) return;
+Stops repeated processing.
+17. Parallel Neighbor Processing
+#pragma omp parallel for
+for (int i = 0; i < adj[node].size(); i++)
+Different neighbors handled by different threads.
+18. OpenMP Tasks
+#pragma omp task
+parallelDFSUtil(neighbor, visited);
+Creates independent tasks.
+Example:
+For node 0:
+Task 1 → DFS(1)
+Task 2 → DFS(2)
+Both may execute simultaneously.
+19. Starting DFS
+#pragma omp parallel
+{
+#pragma omp single
+{
+parallelDFSUtil(start, visited);
+}
+}
+Meaning
+Directive Purpose
+parallel Create thread team
+single Only one thread starts recursion
+Then tasks spread across threads.
+20. Input Example
+0 -- 1
+| | \
+2 3 4
+|
+5
+21. Expected Output
+BFS
+0 1 2 3 4 5
+(Level order)
+DFS
+Possible output:
+0 1 3 4 2 5
+OR
+0 2 5 1 3 4
+Because parallel execution order may vary.
+22. Important OpenMP Concepts Used
+OpenMP Directive Meaning
+#pragma omp parallel Create threads
+#pragma omp parallel for Parallel loop
+#pragma omp critical Only one thread enters
+#pragma omp single Single thread executes
+#pragma omp task Create asynchronous task
+23. Why Parallelism Helps
+For very large graphs:
+• multiple nodes explored simultaneously
+• faster traversal
+• better CPU utilization
+Especially useful in:
+• social networks
+• web crawling
+• AI search
+• scientific computing
+24. Limitation of This Program
+This implementation is educational.
+Real parallel BFS/DFS are more complex because:
+• queue locking reduces speed
+• many critical sections
+• DFS recursion synchronization overhead
+Still excellent for learning OpenMP concepts.
