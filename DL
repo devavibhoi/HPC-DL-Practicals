@@ -120,3 +120,35 @@ plt.show()
 
 
 
+Aim: To implement Boston Housing Price Prediction problem using Linear Regression with Deep Neural Network.
+Theory:
+Linear Regression is a supervised machine learning algorithm used for predicting continuous numerical values. In this practical, a Deep Neural Network is used to perform regression on the Boston Housing Dataset.
+The Boston Housing Dataset contains information about houses such as crime rate, number of rooms, tax rate, and pupil-teacher ratio. The neural network learns the relationship between these features and predicts the housing price.
+A Deep Neural Network consists of:
+* Input Layer
+* Hidden Layers
+* Output Layer
+The model is trained using training data and optimized using backpropagation and gradient descent.
+Formula:
+Linear Regression Equation
+Where:
+* y = predicted output
+* m = slope/weight
+* x = input feature
+* c = bias
+Mean Squared Error:
+MSE=({1}/{n})sumation_{n},{i=1}(y_i-{y}^_i)^2
+Algorithm:
+1. Import required libraries.
+2. Load Boston Housing dataset.
+3. Split dataset into training and testing data.
+4. Normalize the data.
+5. Create Deep Neural Network model.
+6. Add hidden layers using Dense layers.
+7. Compile model using Adam optimizer and MSE loss function.
+8. Train the model using training data.
+9. Evaluate model performance.
+10. Predict house prices using test data.
+Conclusion:
+The Deep Neural Network successfully learned patterns from the Boston Housing Dataset and predicted housing prices effectively using regression techniques.
+
