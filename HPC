@@ -155,6 +155,37 @@ int main() {
 
 
 
+AIM:To design and implement Parallel Breadth First Search (BFS) and Depth First Search (DFS) using OpenMP on an undirected graph.
+Theory:Breadth First Search (BFS) and Depth First Search (DFS) are graph traversal algorithms.
+BFS traverses the graph level by level using a queue data structure, whereas DFS traverses deeply before backtracking using recursion or stack.
+In this practical, OpenMP is used to parallelize BFS and DFS traversal. Multiple threads process graph nodes simultaneously, improving CPU utilization and execution speed.
+OpenMP directives such as #pragma omp parallel for, #pragma omp critical, and #pragma omp task are used for parallel execution and synchronization.
+The graph is represented using an adjacency list.
+ALGORITHM — Parallel BFS: 
+1. Create a graph using adjacency list.
+2. Create a visited array initialized to false.
+3. Insert starting node into queue.
+4. Mark starting node as visited.
+5. While queue is not empty:
+    a. Remove node from queue.
+    b. Process all neighbors in parallel.
+    c. If neighbor is unvisited:
+        i. Mark it visited.
+        ii. Add it into queue.
+6. Repeat until all reachable nodes are visited.
+ALGORITHM — Parallel DFS:
+1. Create a graph using adjacency list.
+2. Create visited array initialized to false.
+3. Start DFS from source node.
+4. Mark current node as visited.
+5. Print current node.
+6. Create parallel tasks for neighbor nodes.
+7. Recursively visit all unvisited neighbors.
+8. Stop when all nodes are visited.
+Conclusion:The practical demonstrated graph traversal using parallel programming concepts. OpenMP directives enabled concurrent execution of BFS and DFS traversal using multiple threads. Synchronization mechanisms such as critical sections were used to avoid race conditions while accessing shared resources.
+
+
+
 Command to execute :
 >> g++ bfs_dfs.cpp -fopenmp -o bfs_dfs.exe
 >> .\bfs_dfs.exe
